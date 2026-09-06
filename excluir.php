@@ -1,0 +1,1 @@
+<?php require '../config.php'; require_admin(); if(($pdo=db()) && isset($_GET['id'])){$st=$pdo->prepare('DELETE FROM produtos WHERE id=?');$st->execute([(int)$_GET['id']]);} header('Location: index.php'); ?>
