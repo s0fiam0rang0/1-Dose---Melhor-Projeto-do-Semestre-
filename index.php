@@ -1,102 +1,314 @@
 <?php
-require 'config.php';
-$pageTitle = 'Início';
+
+require '../config.php';
+require_admin();
+
 $pdo = db();
-if ($pdo) {
-    $produtos = $pdo->query("SELECT * FROM produtos WHERE ativo = 1 ORDER BY id ASC LIMIT 6")->fetchAll();
-} else {
-    $produtos = demo_products();
+
+$produtos = $pdo
+    ? $pdo->query('SELECT * FROM produtos ORDER BY id DESC')->fetchAll()
+    : [];
+
+$nivel = $_SESSION['admin_nivel'] ?? 'funcionario';
+$nome = $_SESSION['admin_nome'] ?? 'Usuário';
+$idLogado = (int)($_SESSION['admin_id'] ?? 0);
+
+$mensagem = '';
+$tipoMensagem = '';
+
+// Mensagens de sucesso
+if (
+    isset($_GET['sucesso']) &&
+    $_GET['sucesso'] === 'produto_excluido'
+) {
+    $mensagem = 'Produto excluído com sucesso.';
+    $tipoMensagem = 'sucesso';
 }
-require 'header.php';
+
+// Mensagens de erro
+if (isset($_GET['erro'])) {
+
+    if ($_GET['erro'] === 'sem_permissao') {
+
+        $mensagem = 'Você não possui permissão para excluir produtos.';
+
+    } elseif ($_GET['erro'] === 'produto_invalido') {
+
+        $mensagem = 'Produto inválido.';
+
+    } elseif ($_GET['erro'] === 'produto_nao_encontrado') {
+
+        $mensagem = 'Produto não encontrado.';
+
+    } elseif ($_GET['erro'] === 'csrf') {
+
+        $mensagem = 'Não foi possível validar a solicitação. Tente novamente.';
+
+    }
+
+    if ($mensagem !== '') {
+        $tipoMensagem = 'erro';
+    }
+}
+
 ?>
-<section class="hero-premium">
-    <div class="hero-photo" aria-hidden="true"></div>
-    <div class="hero-overlay"></div>
-    <div class="container hero-premium-content">
-        <div class="hero-copy">
-            <span class="eyebrow gold">CACHAÇA ARTESANAL • 50 ML</span>
-            <h1>Pequena no tamanho.<br><em>Marcante na presença.</em></h1>
-            <p>A 1 Dose transforma a cachaça artesanal em uma apresentação prática, pronta para servir, expor e compartilhar.</p>
-            <div class="hero-actions">
-                <a href="produtos.php" class="btn btn-primary">Explorar sabores</a>
-                <a href="contato.php" class="btn btn-ghost">Quero revender</a>
-            </div>
-        </div>
-    </div>
-</section>
 
-<section class="ticker" aria-label="Diferenciais">
-    <div class="container ticker-grid">
-        <span>Produção própria</span><span>Ingredientes selecionados</span><span>50 ml por dose</span><span>Pronto para exposição</span>
-    </div>
-</section>
+<!doctype html>
 
-<section class="section story-intro">
-    <div class="container split editorial-split">
+<html lang="pt-BR">
+
+<head>
+
+    <meta charset="utf-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1"
+    >
+
+    <title>Admin | 1 Dose</title>
+
+    <link
+        rel="stylesheet"
+        href="../assets/css/style.css"
+    >
+
+</head>
+
+<body class="admin-body">
+
+<div class="admin-shell">
+
+    <div class="admin-top">
+
         <div>
-            <span class="eyebrow orange">A MARCA</span>
-            <h2>Uma dose criada para caber em diferentes momentos.</h2>
-        </div>
-        <div class="lead-copy">
-            <p>A 1 Dose nasceu com o propósito de oferecer uma experiência prática, saborosa e de alta qualidade. O processo é realizado internamente, do desenvolvimento da bebida ao envase, selagem, controle de qualidade e distribuição.</p>
-            <a class="text-link" href="sobre.php">Conheça nossa história →</a>
-        </div>
-    </div>
-</section>
 
-<section class="section flavor-section">
-    <div class="container">
-        <div class="section-heading">
-            <div>
-                <span class="eyebrow gold">LINHA DE SABORES</span>
-                <h2>Escolha a sua dose.</h2>
-                <p class="section-subtitle">Seis opções em copos individuais de 50 ml.</p>
-            </div>
-            <a href="produtos.php" class="text-link light-link">Ver catálogo completo →</a>
+            <span class="eyebrow orange">
+                PAINEL 1 DOSE
+            </span>
+
+            <h1>Produtos</h1>
+
+            <p>
+                Olá, <?= e($nome) ?>
+            </p>
+
         </div>
-        <div class="product-grid flavor-grid">
+
+
+        <div>
+
+            <a
+                class="btn btn-outline"
+                href="../index.php"
+            >
+                Ver site
+            </a>
+
+
+            <a
+                class="btn btn-primary"
+                href="produto-form.php"
+            >
+                + Novo produto
+            </a>
+
+
+            <?php if ($nivel === 'admin'): ?>
+
+                <a
+                    class="btn btn-outline"
+                    href="usuarios.php"
+                >
+                    Usuários
+                </a>
+
+            <?php endif; ?>
+
+
+            <a
+                class="btn btn-outline"
+                href="usuario_senha.php?id=<?= $idLogado ?>"
+            >
+                Minha senha
+            </a>
+
+
+            <a
+                class="text-link"
+                href="logout.php"
+            >
+                Sair
+            </a>
+
+        </div>
+
+    </div>
+
+
+    <?php if ($mensagem !== ''): ?>
+
+        <?php if ($tipoMensagem === 'sucesso'): ?>
+
+            <p
+                style="
+                    padding:12px;
+                    margin:15px 0;
+                    border-radius:8px;
+                    background:#e5f6e8;
+                    color:#176b2c;
+                "
+            >
+                <?= e($mensagem) ?>
+            </p>
+
+        <?php else: ?>
+
+            <p
+                style="
+                    padding:12px;
+                    margin:15px 0;
+                    border-radius:8px;
+                    background:#ffe5e5;
+                    color:#8b0000;
+                "
+            >
+                <?= e($mensagem) ?>
+            </p>
+
+        <?php endif; ?>
+
+    <?php endif; ?>
+
+
+    <div class="admin-table-wrap">
+
+        <table class="admin-table">
+
+            <thead>
+
+                <tr>
+
+                    <th>Produto</th>
+
+                    <th>Volume</th>
+
+                    <th>Teor</th>
+
+                    <th>Status</th>
+
+                    <th>Ações</th>
+
+                </tr>
+
+            </thead>
+
+
+            <tbody>
+
             <?php foreach ($produtos as $p): ?>
-                <article class="product-card flavor-card">
-                    <a href="produto.php?id=<?= (int)$p['id'] ?>" class="product-link">
-                        <div class="product-visual">
-                            <img src="<?= e($p['imagem']) ?>" alt="<?= e($p['nome']) ?>">
-                            <span class="view-chip">Ver sabor</span>
-                        </div>
-                        <div class="product-body">
-                            <div class="product-meta"><span><?= e($p['volume']) ?></span><span><?= e($p['teor']) ?></span></div>
-                            <h3><?= e($p['nome']) ?></h3>
-                        </div>
-                    </a>
-                </article>
+
+                <tr>
+
+                    <td>
+
+                        <strong>
+                            <?= e($p['nome']) ?>
+                        </strong>
+
+                    </td>
+
+
+                    <td>
+                        <?= e($p['volume']) ?>
+                    </td>
+
+
+                    <td>
+                        <?= e($p['teor']) ?>
+                    </td>
+
+
+                    <td>
+                        <?= $p['ativo'] ? 'Ativo' : 'Oculto' ?>
+                    </td>
+
+
+                    <td>
+
+                        <a
+                            href="produto-form.php?id=<?= (int)$p['id'] ?>"
+                        >
+                            Editar
+                        </a>
+
+
+                        <?php if ($nivel === 'admin'): ?>
+
+                            &nbsp; · &nbsp;
+
+                            <form
+                                method="post"
+                                action="excluir.php"
+                                style="display:inline;"
+                                onsubmit="return confirm('Tem certeza que deseja excluir este produto?');"
+                            >
+
+                                <?= csrf_field() ?>
+
+                                <input
+                                    type="hidden"
+                                    name="id"
+                                    value="<?= (int)$p['id'] ?>"
+                                >
+
+                                <button
+                                    type="submit"
+                                    style="
+                                        background:none;
+                                        border:none;
+                                        padding:0;
+                                        margin:0;
+                                        color:#b00020;
+                                        cursor:pointer;
+                                        text-decoration:underline;
+                                        font:inherit;
+                                    "
+                                >
+                                    Excluir
+                                </button>
+
+                            </form>
+
+                        <?php endif; ?>
+
+                    </td>
+
+                </tr>
+
             <?php endforeach; ?>
-        </div>
-    </div>
-</section>
 
-<section class="section process-section">
-    <div class="container">
-        <span class="eyebrow orange">DA PRODUÇÃO À SUA DOSE</span>
-        <h2>Controle em cada etapa.</h2>
-        <div class="process-grid">
-            <div><strong>01</strong><span>Desenvolvimento</span></div>
-            <div><strong>02</strong><span>Produção</span></div>
-            <div><strong>03</strong><span>Envase</span></div>
-            <div><strong>04</strong><span>Selagem</span></div>
-            <div><strong>05</strong><span>Qualidade</span></div>
-            <div><strong>06</strong><span>Distribuição</span></div>
-        </div>
-    </div>
-</section>
 
-<section class="section b2b-section">
-    <div class="container b2b-card">
-        <div>
-            <span class="eyebrow gold">PARA O SEU NEGÓCIO</span>
-            <h2>Uma apresentação feita para chamar atenção no ponto de venda.</h2>
-            <p>Adegas, conveniências, empórios, distribuidoras, bares e eventos podem falar diretamente com a 1 Dose para conhecer as condições comerciais.</p>
-            <a href="contato.php" class="btn btn-primary">Falar sobre revenda</a>
-        </div>
-        <img src="assets/img/linha-sabores.jpg" alt="Linha de sabores 1 Dose">
+            <?php if (!$produtos): ?>
+
+                <tr>
+
+                    <td colspan="5">
+                        Nenhum produto cadastrado.
+                    </td>
+
+                </tr>
+
+            <?php endif; ?>
+
+            </tbody>
+
+        </table>
+
     </div>
-</section>
-<?php require 'footer.php'; ?>
+
+</div>
+
+</body>
+
+</html>
